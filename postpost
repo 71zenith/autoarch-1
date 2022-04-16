@@ -1,0 +1,47 @@
+#!/bin/bash
+# making directories
+mkdir -p ~/.trash ~/dl ~/mc ~/repos ~/.cache/zsh
+# cloning the dotfiles repo and moving it to ~/.config
+git clone https://github.com/71zenith/dotfiles.git ~/dotfiles
+cp -r ~/dotfiles/. ~/.config/
+rm -rf ~/dotfiles
+# cloning the scripts repo to ~/.local
+git clone https://github.com/71zenith/scripts.git ~/.local/
+# cloning a bunch of repo
+cd ~/repos
+git clone https://github.com/71zenith/autoarch
+git clone https://github.com/71zenith/71zenith profile
+git clone https://github.com/71zenith/71zenith.github.io startpage
+git clone https://github.com/71zenith/dmenu
+# setting prompt
+cd ~/
+git clone https://github.com/spaceship-prompt/spaceship-prompt.git --depth=1 ~/.config/zsh/spaceship/
+ln -sf /home/zen/.config/zsh/spaceship/spaceship.zsh /home/zen/.config/zsh/prompt_spaceship_setup
+# compiling clipmenu
+cd /tmp
+git clone https://github.com/cdown/clipmenu
+cd clipmenu
+doas make install
+# compiling mpv-mpris
+cd /tmp
+git clone https://github.com/hoyon/mpv-mpris
+cd mpv-mpris
+doas make install
+# compiling dmenu
+cd ~/repos/dmenu
+git remote set-url origin git@github.com:71zenith/dmenu
+make
+doas make install
+
+# setting up the origin for push
+cd ~/.config
+git remote set-url origin git@github.com:71zenith/dotfiles
+cd ~/.local
+git remote set-url origin git@github.com:71zenith/scripts
+cd ~/repos/profile
+git remote set-url origin git@github.com:71zenith/71zenith
+cd ~/repos/autoarch
+git remote set-url origin git@github.com:71zenith/autoarch
+cd ~/repos/startpage
+git remote set-url origin git@github.com:71zenith/71zenith.github.io
+

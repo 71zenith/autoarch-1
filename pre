@@ -1,0 +1,38 @@
+#!/bin/sh
+# Setting the tty font
+setfont ter-122n
+
+# Changing some settings in pacman.conf(5)
+sed -e 's/CheckSpace/#CheckSpace/' -e 's/#ParallelDownloads\ =\ 5/ParallelDownloads = 10\nILoveCandy/' -e 's/#Color/Color/' -e 's/#VerbosePkgLists/VerbosePkgLists/' -i /etc/pacman.conf
+
+# pulling down good mirrors
+reflector --country China,India --latest 20 --sort rate --save /etc/pacman.d/mirrorlist
+
+# preparing the disks
+mkfs.fat -F32 /dev/sdb1
+mkswap /dev/sdb2 -L "Swap"
+yes | mkfs.ext4 /dev/sdb3 -L "Arch"
+yes | mkfs.ext4 /dev/sdb4
+mount /dev/sdb3 /mnt
+mkdir /mnt/{boot,home}
+mount /dev/sdb1 /mnt/boot
+mount /dev/sdb4 /mnt/home
+swapon /dev/sdb2
+
+# installing the base system
+pacstrap /mnt amd-ucode base bspwm git linux-lts linux-firmware man moc neovim networkmanager nvidia-lts opendoas playerctl pulseaudio pulseaudio-alsa pulsemixer openssh sxhkd sxiv terminus-font ttf-hanazono xorg-server man-pages xorg-xinit xorg-xprop xorg-xset xorg-xsetroot xwallpaper zathura-pdf-mupdf pop-gtk-theme pop-icon-theme xsel make pkgconf clipnotify ttf-joypixels discord dunst ffmpeg yt-dlp zip unzip mpv dash shellcheck gcc alacritty zsh bat ueberzug patch ttf-iosevka-nerd go firefox gopls
+
+# generating the fstab file
+genfstab -U /mnt >> /mnt/etc/fstab
+
+# putting the mirrorlist to system so that i don't need to run it again
+cp -f /etc/pacman.d/mirrorlist /mnt/etc/pacman.d/mirrorlist
+
+# downloading and putting the post chroot script to /mnt
+curl -L https://github.com/71zenith/autoarch/raw/master/post > /mnt/post
+# running post chroot script inside of /mnt
+arch-chroot /mnt sh post
+# cleanup
+rm -rf /mnt/post
+# rebooting the system
+reboot

@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# setting the locale and timezone
+ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
+echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+locale-gen
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+# setting the tty keyboard
+echo -e "keycode 1 = Caps_Lock\nkeycode 58 = Escape" > /usr/share/kbd/keymaps/caps-esc.map
+echo -e "FONT=ter-122n\nKEYMAP=caps-esc" > /etc/vconsole.conf
+# setting the hostname
+echo "kyouka" >> /etc/hostname
+# setting the hosts file
+echo -e "127.0.0.1    localhost\n::1          localhost\n127.0.1.1    kyouka" >> /etc/hosts
+# setting up doas
+echo "permit nopass :wheel" >> /etc/doas.conf
+# changing /bin/sh to dash
+ln -sfT dash /usr/bin/sh
+echo "[Trigger]
+Type = Package
+Operation = Install
+Operation = Upgrade
+Target = bash
+
+[Action]
+Description = Re-pointing /bin/sh symlink to dash...
+When = PostTransaction
+Exec = /usr/bin/ln -sfT dash /usr/bin/sh
+Depends = dash" > /usr/share/libalpm/hooks/dashbinsh.hook
+# setting doas as sudo symlink
+ln -sfT /bin/doas /bin/sudo
+# setting font
+echo -e "<match target="pattern">
+  <test qual="any" name="family"><string>monospace</string></test>
+  <edit name="family" mode="assign" binding="same"><string>Iosevka Nerd Font</string></edit>
+</match>
+" >> /etc/fonts/fonts.conf
+# setting up systemd-boot
+bootctl install
+echo -e "default arch.conf\ntimeout 0" > /boot/loader/loader.conf
+echo -e "title   Arch Linux\nlinux   /vmlinuz-linux-lts\ninitrd  /amd-ucode.img\ninitrd  /initramfs-linux-lts.img\noptions root=\"LABEL=Arch\" resume=\"LABEL=Swap\" rw" > /boot/loader/entries/arch.conf
+# setting ZDOTDIR
+echo "ZDOTDIR=/home/zen/.config/zsh" >> /etc/environment
+# enabling networkmanager and cronie
+systemctl enable NetworkManager
+systemctl enable cronie.service
+# adding the user and assigning groups
+useradd -m zen -G wheel,audio,video
+# adding chaotic-aur repo and downloading packages
+pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
+pacman-key --lsign-key FBA220DFC880C036
+pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+sed -e 's/CheckSpace/#CheckSpace/' -e 's/#ParallelDownloads\ =\ 5/ParallelDownloads = 10\nILoveCandy/' -e 's/#Color/Color/' -e 's/#VerbosePkgLists/VerbosePkgLists/' -e '$a [chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist' -i /etc/pacman.conf
+pacman -Sy --noconfirm polybar lf picom-ibhagwan-git vscodium vscodium-marketplace
+yes | pacman -S libxft-bgra
+# setting my mkinitcpio for hibernate feature
+sed -e 's/^HOOKS.*/HOOKS=(base udev autodetect keyboard modconf block filesystems resume fsck)/' -e 's/vim.*/vim:ft=sh/' -i /etc/mkinitcpio.conf
+mkinitcpio -p linux-lts
+# downloading and putting xorg.conf to /etc/X11
+curl -L https://github.com/71zenith/autoarch/raw/master/xorg.conf > /etc/X11/xorg.conf
+# downloading post post install script and putting it in home folder of user
+curl -L https://github.com/71zenith/autoarch/raw/master/postpost > /home/zen/postpost
+# running the script as the user
+su -c "sh /home/zen/postpost" zen
+# changing the default shell of user to zsh
+chsh zen -s /bin/zsh
+# cleanup
+rm -rf /home/zen/{.bash_history,.bash_profile,.bash_logout,.bashrc,postpost}
