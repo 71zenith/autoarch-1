@@ -17,6 +17,9 @@ git clone https://github.com/71zenith/dmenu
 cd ~/
 git clone https://github.com/spaceship-prompt/spaceship-prompt.git --depth=1 ~/.config/zsh/spaceship/
 ln -sf /home/zen/.config/zsh/spaceship/spaceship.zsh /home/zen/.config/zsh/prompt_spaceship_setup
+# installing fzf-tab
+cd ~/
+git clone https://github.com/Aloxaf/fzf-tab  --depth=1 ~/.config/zsh/fzf-tab
 # compiling clipmenu
 cd /tmp
 git clone https://github.com/cdown/clipmenu
